@@ -1,4 +1,5 @@
 const Photo = require('../models/photo.model');
+const sanitizeHtml = require('sanitize-html');
 
 /****** SUBMIT PHOTO ********/
 
@@ -7,10 +8,28 @@ exports.add = async (req, res) => {
 		const { title, author, email } = req.fields;
 		const file = req.files.file;
 
-		const titleLength = title.length <= 25;
-		const authorLength = author.length <= 50;
+		const cleanTitle = sanitizeHtml(title, {
+			allowedTags: [],
+			allowedAttributes: {},
+		});
+		const cleanAuthor = sanitizeHtml(author, {
+			allowedTags: [],
+			allowedAttributes: {},
+		});
 
-		if (title && author && email && file && titleLength && authorLength) {
+		const titleLength = cleanTitle.length <= 25;
+		const authorLength = cleanAuthor.length <= 50;
+
+		const emailRegex = /^([a-zA-Z0-9\.]+)@([a-z]+\.[a-z]{2,3}(\.[a-z]{2})?)$/;
+
+		if (
+			title &&
+			author &&
+			emailRegex.test(email) &&
+			file &&
+			titleLength &&
+			authorLength
+		) {
 			// if fields are not empty...
 
 			const fileName = file.path.split('/').slice(-1)[0]; // cut only filename from full path, e.g. C:/test/abc.jpg -> abc.jpg
@@ -20,8 +39,8 @@ exports.add = async (req, res) => {
 				throw new Error('Wrong file');
 			} else {
 				const newPhoto = new Photo({
-					title,
-					author,
+					title: cleanTitle,
+					author: cleanAuthor,
 					email,
 					src: fileName,
 					votes: 0,
