@@ -7,14 +7,16 @@ exports.add = async (req, res) => {
 		const { title, author, email } = req.fields;
 		const file = req.files.file;
 
-		if (title && author && email && file) {
+		const titleLength = title.length <= 25;
+		const authorLength = author.length <= 50;
+
+		if (title && author && email && file && titleLength && authorLength) {
 			// if fields are not empty...
 
 			const fileName = file.path.split('/').slice(-1)[0]; // cut only filename from full path, e.g. C:/test/abc.jpg -> abc.jpg
 
 			const fileExt = fileName.split('.').slice(-1)[0];
 			if (fileExt !== 'jpg' && fileExt !== 'png' && fileExt !== 'gif') {
-				res.status(500).json('Wrong file');
 				throw new Error('Wrong file');
 			} else {
 				const newPhoto = new Photo({
